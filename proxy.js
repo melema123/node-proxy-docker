@@ -8,40 +8,57 @@ const REMOTE_PORT = config.remoteport || 80;
 const LOCAL_HOST = config.localhost || '0.0.0.0';
 const REMOTE_HOST = config.remotehost || 'www.google.com';
 
-http.createServer(onRequest).listen(LOCAL_PORT, LOCAL_HOST);
-console.log("Server listening "+LOCAL_HOST+":"+LOCAL_PORT+"...")
+http.createServer(callback).listen(LOCAL_PORT, LOCAL_HOST);
+console.log(`Server listening ${LOCAL_HOST}:${LOCAL_PORT}...`);
 
-function log(data){
-    var date_time = new Date("27 July 2016 13:30:00 GMT+05:45");
-  
-    //console.log('['+ date_time +'] ' + data.method + ' ' + data.url + 'Headers: \n' + data.headers + 'Body: \n' + data.body);
-}
-
-
-function onRequest(client_req, client_res) {
-    log(client_req);
+function callback(req, client_res) {
+    var body = ''
+    req.on('data', function(data) {
+        body = data + body;
+      });
+      req.on('end', function() {
+        log(req, body);
+      });
   
     var options = {
       hostname: REMOTE_HOST,
       port: REMOTE_PORT,
-      path: client_req.url,
-      method: client_req.method,
-      headers: client_req.headers
+      path: req.url,
+      method: req.method,
+      headers: req.headers
     };
-    console.log("Connecting to remote "+REMOTE_HOST+":"+REMOTE_PORT+"...")
+
+    console.log(`${new Date()} Sent to remote: ${REMOTE_HOST} ${REMOTE_PORT}`)
     var proxy = http.request(options, function (res) {
+      body = ""
       client_res.writeHead(res.statusCode, res.headers)
+      res.on('data', function(data) {
+        body = data + body;
+      });
+      res.on('end', function() {
+        console.log(`${new Date()} Received from remote: ${REMOTE_HOST} ${REMOTE_PORT}`)
+        log(res, body);
+      });
       res.pipe(client_res, {
         end: true
       });
     });
   
-    client_req.pipe(proxy, {
+    req.pipe(proxy, {
       end: true
     });
             
     proxy.on('error', function(err) {
         client_res.writeHead(500)
-        client_res.end('Unable to connect to remote server. ' + err.message)
+        client_res.end('Failed to connect to remote server: '+REMOTE_HOST+":"+REMOTE_PORT + " Error: " + err.message)
     });
+}
+
+function log(data, body){
+  console.log(data.statusCode || `${data.method} ${data.url}`)
+  var headers = data.headers;
+  for (var key in headers) {
+    console.log(key + ": "+ headers[key]);
+  }
+    console.log('\n'+body);
 }
