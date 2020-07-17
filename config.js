@@ -2,7 +2,7 @@ module.exports = {
     configuration: {
         localport: 9000,
         localhost: "0.0.0.0",
-        remotehost: "www.google.com",
+        remotehost: "127.0.0.1",
         remoteport: 80
     }
 }

@@ -5,11 +5,15 @@ const config = require('./config').configuration;
 
 const LOCAL_PORT = config.localport || 9000;
 const REMOTE_PORT = config.remoteport || 80;
-const LOCAL_HOST = config.localhost || '0.0.0.0';
-const REMOTE_HOST = config.remotehost || 'www.google.com';
+const LOCAL_HOST = config.localhost || "0.0.0.0";
+const REMOTE_HOST = config.remotehost || "127.0.0.1";
 
+console.log("---------------------------------------------------------------")
 http.createServer(callback).listen(LOCAL_PORT, LOCAL_HOST);
 console.log(`Server listening ${LOCAL_HOST}:${LOCAL_PORT}...`);
+console.log("---------------------------------------------------------------")
+
+
 
 function callback(req, client_res) {
     var body = ''
@@ -50,7 +54,7 @@ function callback(req, client_res) {
             
     proxy.on('error', function(err) {
         client_res.writeHead(500)
-        client_res.end('Failed to connect to remote server: '+REMOTE_HOST+":"+REMOTE_PORT + " Error: " + err.message)
+        client_res.end(`Failed to connect to remote server ${REMOTE_HOST}:${REMOTE_PORT}. Error: ${err.message}`)
     });
 }
 
