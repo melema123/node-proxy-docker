@@ -7,16 +7,13 @@ const LOCAL_PORT = config.localport || 9000;
 const REMOTE_PORT = config.remoteport || 80;
 const LOCAL_HOST = config.localhost || "0.0.0.0";
 const REMOTE_HOST = config.remotehost || "127.0.0.1";
+const timeout = config.timeout || 3000;
 
-console.log("---------------------------------------------------------------")
 http.createServer(callback).listen(LOCAL_PORT, LOCAL_HOST);
 console.log(`Server listening ${LOCAL_HOST}:${LOCAL_PORT}...`);
-console.log("---------------------------------------------------------------")
-
-
 
 function callback(req, client_res) {
-    var body = ''
+    var body = '';
     req.on('data', function(data) {
         body = data + body;
       });
@@ -29,18 +26,19 @@ function callback(req, client_res) {
       port: REMOTE_PORT,
       path: req.url,
       method: req.method,
-      headers: req.headers
+      headers: req.headers,
+      timeout: timeout
     };
 
-    console.log(`${new Date()} Sent to remote: ${REMOTE_HOST} ${REMOTE_PORT}`)
+    console.log(`${new Date()} Sent to remote: ${REMOTE_HOST}:${REMOTE_PORT}`)
     var proxy = http.request(options, function (res) {
-      body = ""
+      body = "";
       client_res.writeHead(res.statusCode, res.headers)
       res.on('data', function(data) {
         body = data + body;
       });
       res.on('end', function() {
-        console.log(`${new Date()} Received from remote: ${REMOTE_HOST} ${REMOTE_PORT}`)
+        console.log(`${new Date()} Received from remote: ${REMOTE_HOST}:${REMOTE_PORT}`)
         log(res, body);
       });
       res.pipe(client_res, {
@@ -53,9 +51,21 @@ function callback(req, client_res) {
     });
             
     proxy.on('error', function(err) {
-        client_res.writeHead(500)
-        client_res.end(`Failed to connect to remote server ${REMOTE_HOST}:${REMOTE_PORT}. Error: ${err.message}`)
+        if (req.connection.destroyed) {
+          console.log(`Connection to remote dropped after waiting for ${timeout}ms`);
+      }
+      else{
+        client_res.writeHead(500);
+        client_res.end(`Failed to connect to remote server ${REMOTE_HOST}:${REMOTE_PORT}. Error: ${err.message}`);
+        console.log(`Failed to connect to remote server ${REMOTE_HOST}:${REMOTE_PORT}. Error: ${err.message}`);
+      }
     });
+    proxy.on('timeout', function () {
+      client_res.end(`Could not receive response from remote after ${timeout}ms.`);
+      console.log(`Could not receive response from remote after ${timeout}ms.`);
+      proxy.destroy();
+  });
+
 }
 
 function log(data, body){
