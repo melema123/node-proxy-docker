@@ -63,7 +63,6 @@ function callback(req, client_res) {
     proxy.on('timeout', function () {
       client_res.end(`Could not receive response from remote after ${timeout}ms.`);
       console.log(`Could not receive response from remote after ${timeout}ms.`);
-      proxy.destroy();
   });
 
 }
