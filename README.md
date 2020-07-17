@@ -7,8 +7,7 @@ I created it to troubleshoot problems between services(or docker containers) in 
 ### Usage
 
 #### Clone from the code
-`git clone https://github.com/melema123/node-proxy-docker.git`
-`cd node-proxy-docker`
+`git clone https://github.com/melema123/node-proxy-docker.git; cd node-proxy-docker`
 
 #### Build docker image
 `docker build --tag simple-node-http-proxy:1.0 .`
